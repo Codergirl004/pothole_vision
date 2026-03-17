@@ -1,0 +1,83 @@
+# ----------------------------------------------------------------------------
+# Backend (Python / Flask)
+# ----------------------------------------------------------------------------
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+
+# Virtual environments
+backend/venv/
+backend/env/
+backend/.env
+
+# Sensitive credentials - DO NOT COMMIT THESE
+backend/serviceAccountKey.json
+backend/*.pem
+backend/*.key
+
+# Model weights
+backend/model/*.pt
+backend/model/*.onnx
+
+# Uploaded/generated temp files
+backend/temp_*.jpg
+backend/det_*.jpg
+backend/debug_heatmaps/
+backend/*.pdf
+
+# ----------------------------------------------------------------------------
+# Frontend (Flutter)
+# ----------------------------------------------------------------------------
+frontend/.dart_tool/
+frontend/.packages
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# Android/iOS specific generated files
+frontend/android/local.properties
+frontend/android/key.properties
+frontend/android/.gradle/
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/app.flx
+frontend/ios/Flutter/app.zip
+frontend/ios/Flutter/flutter_assets/
+frontend/ios/Flutter/flutter_export_environment.sh
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.iws
+
+# OS Generated
+.DS_Store
+
+
+# Flutter/Dart
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+
+# ML Models & Datasets (if any)
+*.pt
+*.pth
+*.h5
+*.onnx
+datasets/
+
+# OS generated files
+.DS_Store
+Thumbs.db

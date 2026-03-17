@@ -1,0 +1,21 @@
+description: Ultralytics best model trained on /content/Potholes-detection2-1/data.yaml
+author: Ultralytics
+date: '2026-03-04T18:31:24.451237'
+version: 8.3.221
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: '0'
+args:
+  batch: 1
+  fraction: 1.0
+  half: true
+  int8: false
+  nms: false
+channels: 3

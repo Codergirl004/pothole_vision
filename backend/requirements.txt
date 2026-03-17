@@ -1,0 +1,13 @@
+flask
+flask-cors
+firebase-admin
+ultralytics
+torch
+torchvision
+opencv-python
+numpy
+pandas
+openpyxl
+timm
+lapx
+scikit-learn

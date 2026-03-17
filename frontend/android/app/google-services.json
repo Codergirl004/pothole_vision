@@ -1,0 +1,126 @@
+{
+  "project_info": {
+    "project_number": "231383198353",
+    "project_id": "pothole-vision-bd61e",
+    "storage_bucket": "pothole-vision-bd61e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231383198353:android:295b82fa3f205bb8a02d30",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZFNtO1xbdSWHWtccjDoV_THj0N4nKqDY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "231383198353-0h3gk659o3btfv2l12e0vkqikfc68ag6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myFirstApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231383198353:android:bdce17af604ce6d8a02d30",
+        "android_client_info": {
+          "package_name": "com.example.my_first_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "231383198353-mp1ghifi9kerjupfvncsgfqb2fhvu992.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.my_first_app",
+            "certificate_hash": "dd3fcc67038ab882010e429bea6cda0ef604c516"
+          }
+        },
+        {
+          "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZFNtO1xbdSWHWtccjDoV_THj0N4nKqDY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "231383198353-0h3gk659o3btfv2l12e0vkqikfc68ag6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myFirstApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231383198353:android:e9adbec88d8c3e76a02d30",
+        "android_client_info": {
+          "package_name": "com.potholevision.pothole_vision"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZFNtO1xbdSWHWtccjDoV_THj0N4nKqDY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "231383198353-ee3snl5ij1obushfbdiqd53oe7o67976.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "231383198353-0h3gk659o3btfv2l12e0vkqikfc68ag6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myFirstApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
