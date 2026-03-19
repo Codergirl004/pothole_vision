@@ -1,28 +1,22 @@
-import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Upload a file to Firebase Storage and return the download URL
-  Future<String> uploadFile(String storagePath, File file) async {
-    final ref = _storage.ref().child(storagePath);
-    final uploadTask = ref.putFile(file);
-    final snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
-  }
-
-  /// Get download URL for an existing storage path
-  Future<String> getDownloadUrl(String storagePath) async {
-    return await _storage.ref().child(storagePath).getDownloadURL();
-  }
-
-  /// Delete a file from Firebase Storage
-  Future<void> deleteFile(String storagePath) async {
+  /// Deletes a file from Firebase Storage given its public URL.
+  Future<void> deleteFileFromUrl(String url) async {
+    if (url.isEmpty) return;
     try {
-      await _storage.ref().child(storagePath).delete();
-    } catch (_) {
-      // File may not exist, ignore
+      final ref = _storage.refFromURL(url);
+      await ref.delete();
+    } catch (e) {
+      // If the file is already gone, or it's not a storage URL, ignore
+      print('Error deleting storage file: $e');
     }
+  }
+
+  /// Deletes multiple files from Firebase Storage given their public URLs.
+  Future<void> deleteFilesFromUrls(List<String> urls) async {
+    await Future.wait(urls.map((url) => deleteFileFromUrl(url)));
   }
 }

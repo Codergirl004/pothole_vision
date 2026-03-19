@@ -81,7 +81,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'Server issue or connection error. Please try again later.';
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -111,7 +111,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'Server issue or connection error. Please try again later.';
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -140,11 +140,11 @@ class AuthProvider extends ChangeNotifier {
       case 'wrong-password':
         return 'Incorrect password.';
       case 'invalid-credential':
-        return 'Invalid email or password.';
+        return 'Invalid credentials. Please check your password or sign up if you haven\'t registered.';
       case 'too-many-requests':
         return 'Too many attempts. Please try again later.';
       default:
-        return 'Authentication error: $code';
+        return 'An error occurred during authentication. Please try again.';
     }
   }
 }

@@ -114,6 +114,7 @@ class ReportsScreen extends StatelessWidget {
                   : null;
 
               return ReportCard(
+                docId: sortedDocs[index].id,
                 imageUrl: data['imageUrl'] as String?,
                 severity: data['severity'] as String? ?? 'Pending',
                 depthCm: (data['depthCm'] as num?)?.toDouble(),

@@ -54,17 +54,38 @@ class PotholeAnalyzer:
         w_px = x2 - x1
         h_px = y2 - y1
 
-        fx = camera_matrix.get("fx", self.f) if camera_matrix else self.f
-        fy = camera_matrix.get("fy", self.f) if camera_matrix else self.f
+        # Better fallback: typical mobile camera focal length is roughly equal to image width (~53 deg FOV)
+        fallback_fx = img_w * 1.0
+        fallback_fy = img_w * 1.0
+        
+        # Override the camera height to a more realistic waist-level assumption (100 cm) 
+        # to prevent huge area overestimations when users take close-up photos
+        self.H = 100 
+        
+        # Ignore legacy cached matrices from the phone that lack resolution data 
+        # because they might have horribly distorted focal lengths from bad test runs.
+        if camera_matrix and "img_width" not in camera_matrix:
+            camera_matrix = None
+            
+        fx = camera_matrix.get("fx", fallback_fx) if camera_matrix else fallback_fx
+        fy = camera_matrix.get("fy", fallback_fy) if camera_matrix else fallback_fy
+        
+        # If the user calibrated at a different resolution, scale the focal length
+        if camera_matrix and "img_width" in camera_matrix:
+            fx *= (img_w / camera_matrix.get("img_width", img_w))
+            fy *= (img_h / camera_matrix.get("img_height", img_h))
 
         # 1. AREA CALCULATION
         # Scale (cm/px) = Camera Height / Focal Length
         scale_x_cm_px = self.H / fx
         scale_y_cm_px = self.H / fy
         
-        real_w = w_px * scale_x_cm_px
-        real_h = h_px * scale_y_cm_px
-        real_area = real_w * real_h
+        real_w = min(w_px * scale_x_cm_px, 200.0) # Cap at 2 meters max realistic width
+        real_h = min(h_px * scale_y_cm_px, 200.0) # Cap at 2 meters max realistic length
+        
+        # Potholes are usually elliptical, not perfectly rectangular bounding boxes.
+        # Area of ellipse = pi * (w/2) * (h/2) = 0.785 * w * h
+        real_area = 0.785 * real_w * real_h
 
         # 2. RANSAC DEPTH ESTIMATION (Baseline Logic)
         pad = 120 
@@ -72,40 +93,66 @@ class PotholeAnalyzer:
         lx2, ly2 = min(img_w, x2+pad), min(img_h, y2+pad)
         
         try:
-            # ROI for Plane Fitting
+            # 1. PREPARE DATA FOR PLANE FITTING
             roi_depth = depth_map[ly1:ly2, lx1:lx2]
-            yy_roi, xx_roi = np.mgrid[ly1:ly2, lx1:lx2]
-            X_roi = np.column_stack((xx_roi.ravel(), yy_roi.ravel()))
-            y_roi = roi_depth.ravel()
-
-            # Fit RANSAC to road surface
-            ransac = RANSACRegressor(residual_threshold=0.2, random_state=42)
-            ransac.fit(X_roi, y_roi)
+            yy_grid, xx_grid = np.mgrid[ly1:ly2, lx1:lx2]
             
-            # Predict Road Plane
-            yy, xx = np.mgrid[y1:y2, x1:x2]
-            pothole_coords = np.column_stack((xx.ravel(), yy.ravel()))
+            # --- IMPROVEMENT: EXCLUDE POTHOLE FROM ROAD PLANE FITTING ---
+            # Create a mask that is True for road surface and False for the pothole area
+            mask = np.ones(roi_depth.shape, dtype=bool)
+            # Map global bounding box to ROI-relative coordinates
+            px1, py1 = x1 - lx1, y1 - ly1
+            px2, py2 = x2 - lx1, y2 - ly1
+            
+            # Ensure indices are within ROI bounds (should be true due to pad and min/max)
+            mask[max(0, py1):min(roi_depth.shape[0], py2), 
+                 max(0, px1):min(roi_depth.shape[1], px2)] = False
+            
+            # Only use pixels OUTSIDE the pothole to fit the road plane
+            X_road = np.column_stack((xx_grid[mask], yy_grid[mask]))
+            y_road = roi_depth[mask]
+
+            # Fallback if the pothole takes up the entire padded ROI (extremely rare)
+            if len(y_road) < 100:
+                X_road = np.column_stack((xx_grid.ravel(), yy_grid.ravel()))
+                y_road = roi_depth.ravel()
+
+            # 2. FIT ROAD PLANE
+            # Lowered residual_threshold for tighter road surface alignment
+            ransac = RANSACRegressor(residual_threshold=0.15, random_state=42)
+            ransac.fit(X_road, y_road)
+            
+            # Predict the "ideal" road level for the pixels INSIDE the pothole
+            yy_pit, xx_pit = np.mgrid[y1:y2, x1:x2]
+            pothole_coords = np.column_stack((xx_pit.ravel(), yy_pit.ravel()))
             predicted_road = ransac.predict(pothole_coords).reshape(y2-y1, x2-x1)
             
+            # 3. CALCULATE DIFFERENCE
             actual_pit = depth_map[y1:y2, x1:x2]
             diff = predicted_road - actual_pit
             
             self.save_debug_heatmap(diff)
 
-            # Use 65th percentile for depth consistency
-            disparity_diff = np.percentile(diff, 50) 
-            disparity_diff = max(0, disparity_diff)
+            # --- IMPROVEMENT: USE 95th PERCENTILE ---
+            # 85th was an improvement, but 95th is more robust for small deep pits
+            disparity_diff = np.percentile(diff, 95) 
+            disparity_diff = max(0.1, disparity_diff)
 
-            # Scaling Factors
+            # 4. SCALE TO CENTIMETERS
             avg_f = (fx + fy) / 2
-            depth_scale = (self.H / avg_f) * 6.0
+            
+            # Heuristic adjustment: Depth in MiDaS is relative, so we use H/f 
+            # Increased multiplier from 7.0 to 12.0 as MiDaS Small has condensed ranges
+            depth_scale = (self.H / avg_f) * 12.0
             real_depth = disparity_diff * depth_scale
             
+            print(f"Debug Depth -> Diff: {disparity_diff:.2f}, Scale: {depth_scale:.4f}, Depth: {real_depth:.2f}cm")
+
             # Constraints
-            real_depth = max(1.5, min(real_depth, 22.0))
+            real_depth = max(1.5, min(real_depth, 28.0))
 
         except Exception as e:
-            print(f"RANSAC Error: {e}")
+            print(f"Depth Estimation Error: {e}")
             real_depth = 5.0 
 
         # 3. VOLUME CALCULATION

@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen>
                           style: theme.textTheme.bodyMedium),
                       GestureDetector(
                         onTap: () =>
-                            Navigator.pushReplacementNamed(context, '/register'),
+                            Navigator.pushNamed(context, '/register'),
                         child: Text(
                           'Sign Up',
                           style: theme.textTheme.bodyMedium?.copyWith(

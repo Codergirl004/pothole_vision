@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../core/theme.dart';
+import '../providers/pothole_provider.dart';
 
 class ReportCard extends StatelessWidget {
   final String? imageUrl;
@@ -14,6 +16,7 @@ class ReportCard extends StatelessWidget {
   final String? timestamp;
   final int? potholesDetected;
   final VoidCallback? onViewPdf;
+  final String? docId;
 
   const ReportCard({
     super.key,
@@ -28,6 +31,7 @@ class ReportCard extends StatelessWidget {
     this.timestamp,
     this.potholesDetected,
     this.onViewPdf,
+    this.docId,
   });
 
   @override
@@ -83,6 +87,13 @@ class ReportCard extends StatelessWidget {
                               ? Colors.orange
                               : Colors.blue,
                     ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                    onPressed: () => _confirmDelete(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
@@ -177,9 +188,13 @@ class ReportCard extends StatelessWidget {
                       Icon(Icons.access_time,
                           size: 14, color: Colors.grey.shade500),
                       const SizedBox(width: 4),
-                      Text(timestamp!,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey.shade500)),
+                      Expanded(
+                        child: Text(timestamp!,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: Colors.grey.shade500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ),
                     ],
                   ),
                 ],
@@ -208,6 +223,36 @@ class ReportCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    if (docId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Report'),
+        content: const Text(
+            'Are you sure you want to delete this report? This will remove it from your history and delete the image.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      if (!context.mounted) return;
+      final provider = context.read<PotholeProvider>();
+      await provider.deleteUserReport(docId!, imageUrl: imageUrl, pdfUrl: pdfUrl);
+    }
   }
 }
 

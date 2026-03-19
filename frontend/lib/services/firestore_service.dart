@@ -58,6 +58,11 @@ class FirestoreService {
     return docRef.id;
   }
 
+  /// Delete a user's pothole upload record
+  Future<void> deletePotholeRecord(String docId) async {
+    await _db.collection(AppConstants.potholesCollection).doc(docId).delete();
+  }
+
   /// Update pothole record status
   Future<void> updatePotholeStatus(
       String docId, String status, {Map<String, dynamic>? extra}) async {
@@ -109,6 +114,28 @@ class FirestoreService {
       'status': status,
       'last_updated': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Delete an aggregated pothole and all ITS detections
+  Future<void> deleteAggregatedPothole(String locationId) async {
+    // 1. Delete all detections in the sub-collection
+    final detections = await _db
+        .collection(AppConstants.aggregatedPotholesCollection)
+        .doc(locationId)
+        .collection(AppConstants.detectionsSubcollection)
+        .get();
+
+    final batch = _db.batch();
+    for (var doc in detections.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+
+    // 2. Delete the main document
+    await _db
+        .collection(AppConstants.aggregatedPotholesCollection)
+        .doc(locationId)
+        .delete();
   }
 
   // ═══════════════════════════════════════════════════

@@ -17,7 +17,7 @@ class ApiService {
   /// Health check – returns true if the backend is reachable
   Future<bool> healthCheck() async {
     try {
-      final response = await _dio.get('/health');
+      final response = await _dio.get('health');
       return response.statusCode == 200;
     } catch (_) {
       return false;
@@ -59,8 +59,9 @@ class ApiService {
     ]);
 
     final response = await _dio.post(
-      '/detect_batch',
+      'detect_batch',
       data: formData,
+      options: Options(validateStatus: (status) => status != null && status < 500),
       onSendProgress: (sent, total) {
         if (onProgress != null && total > 0) {
           onProgress(sent / total);
@@ -71,11 +72,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return response.data as Map<String, dynamic>;
     } else {
-      throw DioException(
-        requestOptions: response.requestOptions,
-        response: response,
-        message: response.data?['message'] ?? 'Detection failed',
-      );
+      throw Exception(response.data?['message'] ?? 'Detection failed');
     }
   }
 
@@ -95,8 +92,9 @@ class ApiService {
     }
 
     final response = await _dio.post(
-      '/calibrate',
+      'calibrate',
       data: formData,
+      options: Options(validateStatus: (status) => status != null && status < 500),
       onSendProgress: (sent, total) {
         if (onProgress != null && total > 0) {
           onProgress(sent / total);
@@ -107,11 +105,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return response.data as Map<String, dynamic>;
     } else {
-      throw DioException(
-        requestOptions: response.requestOptions,
-        response: response,
-        message: response.data?['message'] ?? 'Calibration failed',
-      );
+      throw Exception(response.data?['message'] ?? 'Calibration failed');
     }
   }
 

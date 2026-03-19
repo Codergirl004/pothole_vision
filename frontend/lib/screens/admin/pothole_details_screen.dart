@@ -47,6 +47,49 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
     }
   }
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Report'),
+        content: const Text(
+            'Are you sure you want to delete this pothole report? This will permanently remove all data and images.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final provider = context.read<PotholeProvider>();
+      
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+
+      await provider.deletePothole(widget.pothole.locationId);
+
+      if (mounted) {
+        Navigator.pop(context); // Pop loading
+        Navigator.pop(context); // Go back to dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report deleted successfully')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -60,6 +103,13 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Location ${widget.pothole.locationId}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            onPressed: () => _confirmDelete(context),
+            tooltip: 'Delete report',
+          ),
+        ],
       ),
       body: provider.loadingDetections
           ? const Center(child: CircularProgressIndicator())

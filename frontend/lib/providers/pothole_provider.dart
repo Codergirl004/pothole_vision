@@ -5,11 +5,13 @@ import '../models/pothole_model.dart';
 import '../models/detection_model.dart';
 import '../services/firestore_service.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 enum UploadStatus { idle, uploading, analyzing, success, error }
 
 class PotholeProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
 
   // ── Upload state ──────────────────────────────────
   UploadStatus _uploadStatus = UploadStatus.idle;
@@ -147,6 +149,46 @@ class PotholeProvider extends ChangeNotifier {
   /// Update pothole status (admin)
   Future<void> updatePotholeStatus(String locationId, String status) async {
     await _firestoreService.updateAggregatedPotholeStatus(locationId, status);
+  }
+
+  /// Delete an aggregated pothole and all associated images from storage
+  Future<void> deletePothole(String locationId) async {
+    // 1. Get all detections to find image URLs
+    final detections = await _firestoreService.getDetections(locationId);
+
+    // 2. Identify all storage URLs to delete
+    final urlsToDelete = <String>[];
+    for (var d in detections) {
+      if (d.imageUrl.isNotEmpty) urlsToDelete.add(d.imageUrl);
+      if (d.pdfUrl != null && d.pdfUrl!.isNotEmpty) urlsToDelete.add(d.pdfUrl!);
+    }
+
+    // 3. Delete from Firebase Storage
+    if (urlsToDelete.isNotEmpty) {
+      await _storageService.deleteFilesFromUrls(urlsToDelete);
+    }
+
+    // 4. Delete from Firestore
+    await _firestoreService.deleteAggregatedPothole(locationId);
+
+    // 5. Update local state
+    _adminPotholes.removeWhere((p) => p.locationId == locationId);
+    notifyListeners();
+  }
+
+  /// Delete a single user report record
+  Future<void> deleteUserReport(String docId, {String? imageUrl, String? pdfUrl}) async {
+    // 1. Delete associated storage files if provided
+    final urls = <String>[];
+    if (imageUrl != null && imageUrl.isNotEmpty) urls.add(imageUrl);
+    if (pdfUrl != null && pdfUrl.isNotEmpty) urls.add(pdfUrl);
+
+    if (urls.isNotEmpty) {
+      await _storageService.deleteFilesFromUrls(urls);
+    }
+
+    // 2. Delete from Firestore
+    await _firestoreService.deletePotholeRecord(docId);
   }
 
   // ═══════════════════════════════════════════════════

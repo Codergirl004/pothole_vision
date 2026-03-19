@@ -195,11 +195,15 @@ class _PotholesListTab extends StatelessWidget {
                                   Icon(Icons.report,
                                       size: 14, color: Colors.grey.shade500),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    '${pothole.complaintCount} complaint(s)',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                  Expanded(
+                                    child: Text(
+                                      '${pothole.complaintCount} complaint(s)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -210,11 +214,15 @@ class _PotholesListTab extends StatelessWidget {
                                   Icon(Icons.access_time,
                                       size: 14, color: Colors.grey.shade500),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    formattedDate,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                  Expanded(
+                                    child: Text(
+                                      formattedDate,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],

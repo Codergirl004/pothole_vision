@@ -67,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pop(context);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -232,7 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                           style: theme.textTheme.bodyMedium),
                       GestureDetector(
                         onTap: () =>
-                            Navigator.pushReplacementNamed(context, '/login'),
+                            Navigator.pop(context),
                         child: Text(
                           'Sign In',
                           style: theme.textTheme.bodyMedium?.copyWith(
