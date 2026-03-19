@@ -6,6 +6,8 @@ class PotholeModel {
   final double lng;
   final int complaintCount;
   final String status;
+  final String? address;
+  final double? priorityScore;
   final DateTime? lastUpdated;
 
   PotholeModel({
@@ -15,6 +17,8 @@ class PotholeModel {
     required this.complaintCount,
     this.status = 'Pending',
     this.lastUpdated,
+    this.address,
+    this.priorityScore,
   });
 
   factory PotholeModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -28,6 +32,8 @@ class PotholeModel {
       lastUpdated: map['last_updated'] != null
           ? (map['last_updated'] as Timestamp).toDate()
           : null,
+      address: map['address'] as String?,
+      priorityScore: (map['priority_score'] as num?)?.toDouble(),
     );
   }
 
@@ -37,6 +43,8 @@ class PotholeModel {
       'complaint_count': complaintCount,
       'status': status,
       'last_updated': FieldValue.serverTimestamp(),
+      'address': address,
+      'priority_score': priorityScore,
     };
   }
 }

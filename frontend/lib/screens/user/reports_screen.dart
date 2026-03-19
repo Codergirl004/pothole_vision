@@ -126,6 +126,9 @@ class ReportsScreen extends StatelessWidget {
                     data['analysisStatus'] as String? ?? 'uploading',
                 timestamp: formattedDate,
                 potholesDetected: data['potholesDetected'] as int?,
+                lat: (data['lat'] as num?)?.toDouble(),
+                lng: (data['lng'] as num?)?.toDouble(),
+                address: data['address'] as String?,
                 onViewPdf: data['pdfUrl'] != null
                     ? () => _openPdfViewer(context, data['pdfUrl'] as String)
                     : null,

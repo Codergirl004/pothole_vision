@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
@@ -22,6 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "com.potholevision.pothole_vision"
+        // minSdk 21 is mandatory for geocoding and google_maps_flutter
+        // minSdk 21 is mandatory for geocoding and google_maps_flutter
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

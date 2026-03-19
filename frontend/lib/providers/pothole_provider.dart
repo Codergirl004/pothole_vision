@@ -6,6 +6,7 @@ import '../models/detection_model.dart';
 import '../services/firestore_service.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../models/report_model.dart';
 enum UploadStatus { idle, uploading, analyzing, success, error }
 
 class PotholeProvider extends ChangeNotifier {
@@ -38,6 +39,13 @@ class PotholeProvider extends ChangeNotifier {
   List<DetectionModel> get detections => _detections;
   bool get loadingDetections => _loadingDetections;
 
+  // ── Reports ───────────────────────────────────────
+  List<ReportModel> _reports = [];
+  bool _loadingReports = false;
+
+  List<ReportModel> get reports => _reports;
+  bool get loadingReports => _loadingReports;
+
   // ═══════════════════════════════════════════════════
   // UPLOAD FLOW
   // ═══════════════════════════════════════════════════
@@ -48,6 +56,7 @@ class PotholeProvider extends ChangeNotifier {
     required double lat,
     required double lng,
     required String userId,
+    String? address,
     String? cameraMatrixJson,
   }) async {
     try {
@@ -62,6 +71,7 @@ class PotholeProvider extends ChangeNotifier {
         lat: lat,
         lng: lng,
         imageCount: images.length,
+        address: address,
       );
 
       _uploadMessage = 'Uploading images...';
@@ -208,5 +218,17 @@ class PotholeProvider extends ChangeNotifier {
   /// Get latest detection for map marker info
   Future<DetectionModel?> getLatestDetection(String locationId) async {
     return await _firestoreService.getLatestDetection(locationId);
+  }
+
+  /// Load reports for a specific location
+  Future<void> loadReports(String locationId) async {
+    _loadingReports = true;
+    notifyListeners();
+
+    final data = await _firestoreService.getReports(locationId);
+    _reports = data.map((m) => ReportModel.fromMap(m, m['id'])).toList();
+    
+    _loadingReports = false;
+    notifyListeners();
   }
 }

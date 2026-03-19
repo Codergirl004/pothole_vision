@@ -7,6 +7,7 @@ import '../../models/pothole_model.dart';
 import '../../widgets/pothole_card.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import '../../services/geocoding_service.dart';
 
 class PotholeDetailsScreen extends StatefulWidget {
   final PotholeModel pothole;
@@ -19,15 +20,27 @@ class PotholeDetailsScreen extends StatefulWidget {
 
 class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
   late String _currentStatus;
+  String? _address;
 
   @override
   void initState() {
     super.initState();
     _currentStatus = widget.pothole.status;
-    // Load detections
+    _loadAddress();
+    // Load reports
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PotholeProvider>().loadDetections(widget.pothole.locationId);
+      context.read<PotholeProvider>().loadReports(widget.pothole.locationId);
     });
+  }
+
+  Future<void> _loadAddress() async {
+    final addr = await GeocodingService.getAddressFromCoordinates(
+        widget.pothole.lat, widget.pothole.lng);
+    if (mounted) {
+      setState(() {
+        _address = addr;
+      });
+    }
   }
 
   Future<void> _updateStatus(String newStatus) async {
@@ -102,7 +115,7 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Location ${widget.pothole.locationId}'),
+        title: Text(_address ?? 'Location ${widget.pothole.locationId}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -111,7 +124,7 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
           ),
         ],
       ),
-      body: provider.loadingDetections
+      body: provider.loadingReports
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -132,7 +145,7 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Location: ${widget.pothole.locationId}',
+                                  _address ?? 'Location: ${widget.pothole.locationId}',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -141,13 +154,16 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Row(
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
                             children: [
                               _InfoChip(
                                   Icons.report, '${widget.pothole.complaintCount} complaints'),
-                              const SizedBox(width: 10),
                               _InfoChip(Icons.gps_fixed,
                                   '${widget.pothole.lat.toStringAsFixed(4)}, ${widget.pothole.lng.toStringAsFixed(4)}'),
+                               if (_address != null)
+                                 _InfoChip(Icons.map, _address!),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -196,25 +212,23 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // ── Detections Header ───────────────
+                                   // ── Reports Header ───────────────────────────────
                   Text(
-                    'Detections (${provider.detections.length})',
+                    'PDF Reports',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Sorted by priority score (highest first)',
+                    'Historical analysis reports for this location',
                     style: TextStyle(
                         color: Colors.grey.shade600, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-
-                  // ── Detections List ─────────────────
-                  if (provider.detections.isEmpty)
+ 
+                  // ── Reports List ─────────────────
+                  if (provider.reports.isEmpty)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(32),
@@ -224,35 +238,39 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.search_off,
+                          Icon(Icons.description_outlined,
                               size: 40, color: Colors.grey.shade400),
                           const SizedBox(height: 8),
-                          Text('No detections found',
+                          Text('No PDF reports available',
                               style: TextStyle(color: Colors.grey.shade600)),
                         ],
                       ),
                     )
                   else
-                    ...provider.detections.map((detection) {
-                      final formattedDate = detection.timestamp != null
+                    ...provider.reports.map((report) {
+                      final formattedDate = report.timestamp != null
                           ? DateFormat('MMM dd, yyyy • hh:mm a')
-                              .format(detection.timestamp!)
-                          : null;
-
-                      return PotholeCard(
-                        imageUrl: detection.imageUrl,
-                        areaCm2: detection.areaCm2,
-                        depthCm: detection.depthCm,
-                        volumeCm3: detection.volumeCm3,
-                        totalCost: detection.totalCost,
-                        priorityLabel: detection.priorityLabel,
-                        priorityScore: detection.priorityScore,
-                        timestamp: formattedDate,
-                        onViewPdf: detection.pdfUrl != null
-                            ? () => _openPdfViewer(context, detection.pdfUrl!)
-                            : null,
+                              .format(report.timestamp!)
+                          : 'Unknown Date';
+ 
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                          ),
+                          title: Text('Report - $formattedDate'),
+                          subtitle: Text('Severity: ${report.severity} • ${report.detectionCount} detections'),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () => _openPdfViewer(context, report.pdfUrl),
+                        ),
                       );
-                    }),
+                    }).toList(),
                 ],
               ),
             ),
@@ -281,6 +299,7 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
@@ -291,8 +310,14 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: Colors.grey.shade600),
           const SizedBox(width: 4),
-          Text(text,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
         ],
       ),
     );

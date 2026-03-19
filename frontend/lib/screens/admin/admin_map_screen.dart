@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../providers/pothole_provider.dart';
 import '../../models/detection_model.dart';
+import '../../services/geocoding_service.dart';
 import '../../core/theme.dart';
 
 class AdminMapScreen extends StatefulWidget {
@@ -45,17 +46,17 @@ class _AdminMapScreenState extends State<AdminMapScreen> {
           latestDetection?.priorityLabel.toLowerCase() ?? 'low';
       final markerColor = _getMarkerHue(priorityLabel);
 
+      final address = await GeocodingService.getAddressFromCoordinates(pothole.lat, pothole.lng);
+
       markers.add(
         Marker(
           markerId: MarkerId(pothole.locationId),
           position: LatLng(pothole.lat, pothole.lng),
           icon: BitmapDescriptor.defaultMarkerWithHue(markerColor),
           infoWindow: InfoWindow(
-            title:
+            title: address,
+            snippet:
                 '${pothole.complaintCount} complaint(s) • ${latestDetection?.priorityLabel ?? 'Unknown'}',
-            snippet: latestDetection != null
-                ? 'Cost: ${latestDetection.currency} ${latestDetection.totalCost.toStringAsFixed(2)}'
-                : 'No analysis yet',
           ),
         ),
       );

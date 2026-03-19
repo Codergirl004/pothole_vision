@@ -38,6 +38,7 @@ dependencies:
 
   # Location
   geolocator: ^13.0.2
+  geocoding: ^3.0.0
 
   # Networking Image Cache
   cached_network_image: ^3.4.1

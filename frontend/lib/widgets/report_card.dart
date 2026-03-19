@@ -3,8 +3,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../providers/pothole_provider.dart';
+import '../services/geocoding_service.dart';
 
-class ReportCard extends StatelessWidget {
+class ReportCard extends StatefulWidget {
   final String? imageUrl;
   final String severity;
   final double? depthCm;
@@ -17,7 +18,10 @@ class ReportCard extends StatelessWidget {
   final int? potholesDetected;
   final VoidCallback? onViewPdf;
   final String? docId;
-
+  final double? lat;
+  final double? lng;
+  final String? address;
+ 
   const ReportCard({
     super.key,
     this.imageUrl,
@@ -32,15 +36,43 @@ class ReportCard extends StatelessWidget {
     this.potholesDetected,
     this.onViewPdf,
     this.docId,
+    this.lat,
+    this.lng,
+    this.address,
   });
+
+  @override
+  State<ReportCard> createState() => _ReportCardState();
+}
+
+class _ReportCardState extends State<ReportCard> {
+  String? _address;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    if (widget.lat != null && widget.lng != null) {
+      final addr = await GeocodingService.getAddressFromCoordinates(
+          widget.lat!, widget.lng!);
+      if (mounted) {
+        setState(() {
+          _address = addr;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isAnalyzed = analysisStatus == 'analyzed';
-    final isError = analysisStatus == 'error';
+    final isAnalyzed = widget.analysisStatus == 'analyzed';
+    final isError = widget.analysisStatus == 'error';
     final isProcessing =
-        analysisStatus == 'uploading' || analysisStatus == 'processing';
+        widget.analysisStatus == 'uploading' || widget.analysisStatus == 'processing';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -78,7 +110,7 @@ class ReportCard extends StatelessWidget {
                         ? 'Analysis failed'
                         : isProcessing
                             ? 'Processing...'
-                            : analysisStatus ?? 'Pending',
+                            : widget.analysisStatus ?? 'Pending',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: isError
@@ -100,12 +132,12 @@ class ReportCard extends StatelessWidget {
             ),
 
           // ── Image ────────────────────────────────
-          if (imageUrl != null && imageUrl!.isNotEmpty)
+          if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
             SizedBox(
               height: 160,
               width: double.infinity,
               child: CachedNetworkImage(
-                imageUrl: imageUrl!,
+                imageUrl: widget.imageUrl!,
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(
                   color: Colors.grey.shade200,
@@ -133,11 +165,11 @@ class ReportCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.priorityColor(severity),
+                        color: AppTheme.priorityColor(widget.severity),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        severity.toUpperCase(),
+                        widget.severity.toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -146,9 +178,9 @@ class ReportCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    if (estimatedCost != null)
+                    if (widget.estimatedCost != null)
                       Text(
-                        'Rs. ${estimatedCost!.toStringAsFixed(2)}',
+                        'Rs. ${widget.estimatedCost!.toStringAsFixed(2)}',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,
@@ -157,39 +189,57 @@ class ReportCard extends StatelessWidget {
                   ],
                 ),
 
-                if (isAnalyzed && depthCm != null) ...[
+                if (isAnalyzed && widget.depthCm != null) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _InfoItem('Depth', '${depthCm!.toStringAsFixed(1)} cm'),
+                      _InfoItem('Depth', '${widget.depthCm!.toStringAsFixed(1)} cm'),
                       const SizedBox(width: 16),
-                      _InfoItem('Area', '${areaCm2?.toStringAsFixed(1)} cm²'),
+                      _InfoItem('Area', '${widget.areaCm2?.toStringAsFixed(1)} cm²'),
                       const SizedBox(width: 16),
                       _InfoItem(
-                          'Volume', '${volumeCm3?.toStringAsFixed(1)} cm³'),
+                          'Volume', '${widget.volumeCm3?.toStringAsFixed(1)} cm³'),
                     ],
                   ),
                 ],
 
-                if (potholesDetected != null) ...[
+                if (widget.potholesDetected != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '$potholesDetected pothole(s) detected',
+                    '${widget.potholesDetected} pothole(s) detected',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade600,
                     ),
                   ),
                 ],
 
-                if (timestamp != null) ...[
-                  const SizedBox(height: 8),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                          _address ??
+                              widget.address ??
+                              'Coords: ${widget.lat?.toStringAsFixed(4)}, ${widget.lng?.toStringAsFixed(4)}',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: Colors.grey.shade500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+
+                if (widget.timestamp != null) ...[
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(Icons.access_time,
                           size: 14, color: Colors.grey.shade500),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(timestamp!,
+                        child: Text(widget.timestamp!,
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: Colors.grey.shade500),
                             maxLines: 1,
@@ -200,13 +250,13 @@ class ReportCard extends StatelessWidget {
                 ],
 
                 // PDF button
-                if (pdfUrl != null && pdfUrl!.isNotEmpty && onViewPdf != null)
+                if (widget.pdfUrl != null && widget.pdfUrl!.isNotEmpty && widget.onViewPdf != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: onViewPdf,
+                        onPressed: widget.onViewPdf,
                         icon: const Icon(Icons.picture_as_pdf, size: 18),
                         label: const Text('View PDF Report'),
                         style: OutlinedButton.styleFrom(
@@ -226,7 +276,7 @@ class ReportCard extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
-    if (docId == null) return;
+    if (widget.docId == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -251,7 +301,7 @@ class ReportCard extends StatelessWidget {
     if (confirmed == true) {
       if (!context.mounted) return;
       final provider = context.read<PotholeProvider>();
-      await provider.deleteUserReport(docId!, imageUrl: imageUrl, pdfUrl: pdfUrl);
+      await provider.deleteUserReport(widget.docId!, imageUrl: widget.imageUrl, pdfUrl: widget.pdfUrl);
     }
   }
 }

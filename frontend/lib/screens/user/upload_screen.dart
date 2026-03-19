@@ -9,6 +9,7 @@ import '../../providers/calibration_provider.dart';
 import '../../widgets/image_preview.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../utils/image_utils.dart';
+import '../../services/geocoding_service.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -21,6 +22,7 @@ class _UploadScreenState extends State<UploadScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<File> _selectedImages = [];
   Position? _currentPosition;
+  String? _currentAddress;
   bool _gettingLocation = false;
 
   @override
@@ -64,6 +66,16 @@ class _UploadScreenState extends State<UploadScreen> {
       );
       setState(() {
         _currentPosition = position;
+      });
+
+      // Fetch address
+      final address = await GeocodingService.getAddressFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      
+      setState(() {
+        _currentAddress = address;
         _gettingLocation = false;
       });
     } catch (e) {
@@ -119,6 +131,7 @@ class _UploadScreenState extends State<UploadScreen> {
       images: compressed,
       lat: lat,
       lng: lng,
+      address: _currentAddress,
       userId: auth.userModel?.uid ?? '',
       cameraMatrixJson: calibrationProvider.cameraMatrixJson,
     );
@@ -217,11 +230,17 @@ class _UploadScreenState extends State<UploadScreen> {
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
+                            if (_currentAddress != null)
+                              Text(
+                                _currentAddress!,
+                                style: const TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
                             if (_currentPosition != null)
                               Text(
                                 '${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}',
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey.shade600),
+                                    fontSize: 11, color: Colors.grey.shade600),
                               ),
                           ],
                         ),

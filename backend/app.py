@@ -136,6 +136,7 @@ def detect_batch_api():
     all_potholes_data = []
     seen_hashes = set()
     total_batch_cost = 0
+    total_batch_severity = 0
     temp_files_to_cleanup = []
 
     try:
@@ -169,27 +170,9 @@ def detect_batch_api():
                         area, depth, volume = metrics["area"], metrics["depth"], metrics["volume"]
                         costs = estimator.estimate_cost(float(volume))
                         
-                        # --- 2. TRANSACTIONAL COMPLAINT COUNTER ---
-                        @firestore.transactional
-                        def update_complaint_count(transaction, loc_ref):
-                            snapshot = loc_ref.get(transaction=transaction)
-                            count = 0
-                            if snapshot.exists:
-                                count = snapshot.to_dict().get("complaint_count", 0)
-                            
-                            new_count = count + 1
-                            transaction.set(loc_ref, {
-                                "complaint_count": new_count,
-                                "last_updated": firestore.SERVER_TIMESTAMP,
-                                "coords": {"lat": lat, "lng": lng}
-                            }, merge=True)
-                            return new_count
-
-                        transaction = db.transaction()
-                        current_complaint_num = update_complaint_count(transaction, location_ref)
-                        
-                        score = prioritizer.get_priority_score(float(depth), float(area), is_busy_area=True, complaint_count=current_complaint_num)
+                        score = prioritizer.get_priority_score(float(depth), float(area))
                         total_batch_cost += costs['total_cost']
+                        total_batch_severity += float(score)
 
                         # Annotate Image
                         annotated_img = res.orig_img.copy()
@@ -216,7 +199,7 @@ def detect_batch_api():
                             "priority": {"score": float(score), "label": prioritizer.get_label(score)},
                             "estimation": {"total_cost": costs['total_cost'], "currency": "Rs."},
                             "image_url": blob.public_url,
-                            "complaint_instance": current_complaint_num,
+                            "complaint_instance": 1, 
                             "timestamp": firestore.SERVER_TIMESTAMP
                         }
                         
@@ -227,23 +210,47 @@ def detect_batch_api():
                         report["local_temp_img"] = img_name
                         all_potholes_data.append(report)
 
-        # --- 4. PDF GENERATION ---
+        # --- 4. BATCH-LEVEL COMPLAINT INCREMENT ---
         if all_potholes_data:
+            @firestore.transactional
+            def update_complaint_count(transaction, loc_ref):
+                snapshot = loc_ref.get(transaction=transaction)
+                count = 0
+                if snapshot.exists:
+                    count = snapshot.to_dict().get("complaint_count", 0)
+                
+                new_count = count + 1
+                transaction.set(loc_ref, {
+                    "complaint_count": new_count,
+                    "last_updated": firestore.SERVER_TIMESTAMP,
+                    "coords": {"lat": lat, "lng": lng}
+                }, merge=True)
+                return new_count
+
+            transaction = db.transaction()
+            current_complaint_total = update_complaint_count(transaction, location_ref)
+
+            # --- 5. PDF GENERATION ---
             pdf_file = generate_pdf_report(all_potholes_data, total_batch_cost)
             pdf_blob = bucket.blob(f"reports/{pdf_file}")
             pdf_blob.upload_from_filename(pdf_file)
             pdf_blob.make_public()
             pdf_url = pdf_blob.public_url
             os.remove(pdf_file)
-
-            # --- 5. UPDATE USER'S POTHOLES DOCUMENT ---
+            # --- 6. DATA AGGREGATION & REPORTING ---
+            if not all_potholes_data:
+                return jsonify({"success": False, "message": "No potholes detected"}), 404
+                
             first_detection = all_potholes_data[0]
+            avg_score = total_batch_severity / len(all_potholes_data)
+
+            # --- 7. UPDATE USER'S POTHOLES DOCUMENT ---
             if firestore_doc_id:
                 db.collection("potholes").document(firestore_doc_id).set({
                     "analysisStatus": "analyzed",
                     "pdfUrl": pdf_url,
-                    "severity": first_detection['priority']['label'],
-                    "severityScore": first_detection['priority']['score'],
+                    "severity": prioritizer.get_label(avg_score),
+                    "severityScore": total_batch_severity, # USE SUM AS REQUESTED
                     "depthCm": first_detection['metrics']['depth_cm'],
                     "areaCm2": first_detection['metrics']['area_cm2'],
                     "volumeCm3": first_detection['metrics']['volume_cm3'],
@@ -257,9 +264,10 @@ def detect_batch_api():
                 "success": True, 
                 "pdf_url": pdf_url,
                 "total_batch_cost": total_batch_cost,
+                "total_batch_severity": total_batch_severity,
                 "potholes_processed": len(all_potholes_data),
-                "severity": first_detection['priority']['label'],
-                "severity_score": first_detection['priority']['score'],
+                "severity": prioritizer.get_label(total_batch_severity / len(all_potholes_data)),
+                "severity_score": total_batch_severity,
                 "depth_cm": first_detection['metrics']['depth_cm'],
                 "area_cm2": first_detection['metrics']['area_cm2'],
                 "estimated_cost": first_detection['estimation']['total_cost'],

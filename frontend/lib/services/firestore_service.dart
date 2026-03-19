@@ -45,12 +45,14 @@ class FirestoreService {
     required double lat,
     required double lng,
     required int imageCount,
+    String? address,
   }) async {
     final docRef =
         await _db.collection(AppConstants.potholesCollection).add({
       'userId': userId,
       'lat': lat,
       'lng': lng,
+      'address': address,
       'imageCount': imageCount,
       'analysisStatus': 'uploading',
       'createdAt': FieldValue.serverTimestamp(),
@@ -170,5 +172,30 @@ class FirestoreService {
     final detections = await getDetections(locationId);
     if (detections.isNotEmpty) return detections.first;
     return null;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // REPORTS (Sub-collection of aggregated_potholes)
+  // ═══════════════════════════════════════════════════
+
+  /// Get reports for a location
+  Future<List<Map<String, dynamic>>> getReports(String locationId) async {
+    final snap = await _db
+        .collection(AppConstants.aggregatedPotholesCollection)
+        .doc(locationId)
+        .collection('reports')
+        .orderBy('timestamp', descending: true)
+        .get();
+    return snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+  }
+
+  /// Get reports stream
+  Stream<QuerySnapshot> getReportsStream(String locationId) {
+    return _db
+        .collection(AppConstants.aggregatedPotholesCollection)
+        .doc(locationId)
+        .collection('reports')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
   }
 }
