@@ -260,6 +260,15 @@ def detect_batch_api():
                     "analyzedAt": firestore.SERVER_TIMESTAMP,
                 }, merge=True)
 
+            # --- 8. ADD TO AGGREGATED REPORTS SUB-COLLECTION ---
+            location_ref.collection("reports").add({
+                "pdf_url": pdf_url,
+                "detection_count": len(all_potholes_data),
+                "total_cost": total_batch_cost,
+                "severity": prioritizer.get_label(avg_score),
+                "timestamp": firestore.SERVER_TIMESTAMP
+            })
+
             return jsonify({
                 "success": True, 
                 "pdf_url": pdf_url,
