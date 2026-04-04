@@ -121,12 +121,6 @@ class _ReportCardState extends State<ReportCard> {
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
-                    onPressed: () => _confirmDelete(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
                 ],
               ),
             ),
@@ -178,9 +172,17 @@ class _ReportCardState extends State<ReportCard> {
                       ),
                     ),
                     const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+                      onPressed: () => _confirmDelete(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Delete report',
+                    ),
+                    const SizedBox(width: 8),
                     if (widget.estimatedCost != null)
                       Text(
-                        'Rs. ${widget.estimatedCost!.toStringAsFixed(2)}',
+                        '${(widget.potholesDetected ?? 1) > 1 ? "Total: " : ""}Rs. ${widget.estimatedCost!.toStringAsFixed(2)}',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,

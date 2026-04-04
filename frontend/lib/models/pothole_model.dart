@@ -33,7 +33,7 @@ class PotholeModel {
           ? (map['last_updated'] as Timestamp).toDate()
           : null,
       address: map['address'] as String?,
-      priorityScore: (map['priority_score'] as num?)?.toDouble(),
+      priorityScore: (map['priority']?['score'] as num?)?.toDouble(),
     );
   }
 
@@ -44,7 +44,10 @@ class PotholeModel {
       'status': status,
       'last_updated': FieldValue.serverTimestamp(),
       'address': address,
-      'priority_score': priorityScore,
+      'priority': {
+        'score': priorityScore,
+        'label': 'Unknown', // Default label for now
+      },
     };
   }
 }

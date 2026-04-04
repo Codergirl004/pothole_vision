@@ -174,14 +174,128 @@ class _PotholesListTabState extends State<_PotholesListTab> {
               break;
           }
 
+          // --- 1. PRE-PROCESS AND GROUP POTHOLES ---
+          final Map<String, List<PotholeModel>> groupedPotholes = {};
+          final Map<String, int> groupComplaints = {};
+
+          for (var p in potholes) {
+            // Priority: Assigned address > Coordinates String
+            String street = 'Location';
+            if (p.address != null && p.address!.isNotEmpty) {
+              street = p.address!.split(',').first.trim();
+            } else {
+              // Use coordinates directly from the model
+              street = "Coordinates: ${p.lat.toStringAsFixed(4)}, ${p.lng.toStringAsFixed(4)}";
+            }
+            
+            if (!groupedPotholes.containsKey(street)) {
+              groupedPotholes[street] = [];
+              groupComplaints[street] = 0;
+            }
+            groupedPotholes[street]!.add(p);
+            groupComplaints[street] = groupComplaints[street]! + p.complaintCount;
+          }
+
+          final sortedGroups = groupedPotholes.keys.toList();
+          // Sort groups by total complaints descending
+          sortedGroups.sort((a, b) => groupComplaints[b]!.compareTo(groupComplaints[a]!));
+
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: potholes.length,
-            itemBuilder: (context, index) {
-              return _PotholeListItem(pothole: potholes[index]);
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            itemCount: sortedGroups.length,
+            itemBuilder: (context, gIndex) {
+              final street = sortedGroups[gIndex];
+              final areaPotholes = groupedPotholes[street]!;
+              final totalComplaints = groupComplaints[street]!;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!street.startsWith('Coordinates:'))
+                    _LocationHeader(
+                      title: street,
+                      complaintCount: totalComplaints,
+                    ),
+                  const SizedBox(height: 8),
+                  ...areaPotholes.map((p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _PotholeListItem(pothole: p),
+                  )),
+                  const SizedBox(height: 16),
+                ],
+              );
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _LocationHeader extends StatelessWidget {
+  final String title;
+  final int complaintCount;
+
+  const _LocationHeader({required this.title, required this.complaintCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.location_on, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.primary, Colors.deepPurple],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              '$complaintCount Complaints',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -208,18 +322,12 @@ class _PotholeListItemState extends State<_PotholeListItem> {
   Future<void> _resolveAddress() async {
     if (widget.pothole.address != null) return;
     
-    // Attempt geocoding from locationId (lat_lng)
+    // Attempt geocoding directly from model coordinates
     try {
-      final parts = widget.pothole.locationId.split('_');
-      if (parts.length == 2) {
-        final lat = double.tryParse(parts[0]);
-        final lng = double.tryParse(parts[1]);
-        if (lat != null && lng != null) {
-          final addr = await GeocodingService.getAddressFromCoordinates(lat, lng);
-          if (mounted) {
-            setState(() => _resolvedAddress = addr);
-          }
-        }
+      final addr = await GeocodingService.getAddressFromCoordinates(
+          widget.pothole.lat, widget.pothole.lng);
+      if (mounted) {
+        setState(() => _resolvedAddress = addr);
       }
     } catch (_) {}
   }
@@ -228,21 +336,15 @@ class _PotholeListItemState extends State<_PotholeListItem> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pothole = widget.pothole;
-    final status = pothole.status;
-    final statusColor = status == AppConstants.statusFixed
-        ? AppTheme.statusFixed
-        : status == AppConstants.statusInProgress
-            ? AppTheme.severityMedium
-            : AppTheme.severityHigh;
 
     final formattedDate = pothole.lastUpdated != null
         ? DateFormat('MMM dd, yyyy • hh:mm a').format(pothole.lastUpdated!)
         : 'Unknown';
 
-    final displayAddress = pothole.address ?? _resolvedAddress ?? 'Location: ${pothole.locationId}';
+    final displayAddress = pothole.address ?? _resolvedAddress ?? 'Resolving location...';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: InkWell(
         onTap: () => Navigator.push(
           context,
@@ -255,19 +357,17 @@ class _PotholeListItemState extends State<_PotholeListItem> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Status indicator
+              // Default icon instead of status indicator
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  status == AppConstants.statusFixed
-                      ? Icons.check_circle
-                      : Icons.warning_rounded,
-                  color: statusColor,
+                  Icons.warning_rounded,
+                  color: theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 14),
@@ -280,17 +380,16 @@ class _PotholeListItemState extends State<_PotholeListItem> {
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Icon(Icons.report, size: 14, color: Colors.grey.shade500),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            '${pothole.complaintCount} complaint(s) • Severity: ${pothole.priorityScore?.toStringAsFixed(1) ?? 'N/A'}',
+                            '${pothole.complaintCount} complaint(s)',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -320,22 +419,6 @@ class _PotholeListItemState extends State<_PotholeListItem> {
                       ],
                     ),
                   ],
-                ),
-              ),
-              // Status chip
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
                 ),
               ),
               const SizedBox(width: 4),

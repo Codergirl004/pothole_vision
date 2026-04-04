@@ -19,13 +19,11 @@ class PotholeDetailsScreen extends StatefulWidget {
 }
 
 class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
-  late String _currentStatus;
   String? _address;
 
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.pothole.status;
     _loadAddress();
     // Load reports
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,23 +38,6 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
       setState(() {
         _address = addr;
       });
-    }
-  }
-
-  Future<void> _updateStatus(String newStatus) async {
-    final provider = context.read<PotholeProvider>();
-    setState(() => _currentStatus = newStatus);
-    await provider.updatePotholeStatus(widget.pothole.locationId, newStatus);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Status updated to $newStatus'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
     }
   }
 
@@ -107,11 +88,6 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = context.watch<PotholeProvider>();
-    final statusColor = _currentStatus == AppConstants.statusFixed
-        ? AppTheme.statusFixed
-        : _currentStatus == AppConstants.statusInProgress
-            ? AppTheme.severityMedium
-            : AppTheme.severityHigh;
 
     return Scaffold(
       appBar: AppBar(
@@ -162,50 +138,8 @@ class _PotholeDetailsScreenState extends State<PotholeDetailsScreen> {
                                   Icons.report, '${widget.pothole.complaintCount} complaints'),
                               _InfoChip(Icons.gps_fixed,
                                   '${widget.pothole.lat.toStringAsFixed(4)}, ${widget.pothole.lng.toStringAsFixed(4)}'),
-                               if (_address != null)
+                              if (_address != null)
                                  _InfoChip(Icons.map, _address!),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Status update dropdown
-                          Row(
-                            children: [
-                              Text('Status:',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w600)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color:
-                                            statusColor.withValues(alpha: 0.3)),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _currentStatus,
-                                      isExpanded: true,
-                                      items: AppConstants.potholeStatuses
-                                          .map((s) => DropdownMenuItem(
-                                                value: s,
-                                                child: Text(s),
-                                              ))
-                                          .toList(),
-                                      onChanged: (val) {
-                                        if (val != null &&
-                                            val != _currentStatus) {
-                                          _updateStatus(val);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ],

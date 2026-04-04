@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../core/constants.dart';
 
@@ -26,17 +27,19 @@ class ApiService {
 
   /// Upload images to the backend for pothole detection.
   ///
-  /// [images] – list of image files
-  /// [lat], [lng] – GPS coordinates
-  /// [userId] – current user UID
-  /// [firestoreDocId] – Firestore document ID for status tracking
-  /// [onProgress] – optional upload progress callback (0.0 – 1.0)
+  /// images: list of image files
+  /// lat, lng: global/fallback GPS coordinates
+  /// userId: current user UID
+  /// firestoreDocId: Firestore document ID for status tracking
+  /// locations: optional list of per-image GPS coordinates
+  /// onProgress: optional upload progress callback (0.0 – 1.0)
   Future<Map<String, dynamic>> detectBatch({
     required List<File> images,
     required double lat,
     required double lng,
     required String userId,
     required String firestoreDocId,
+    List<Map<String, double>>? locations,
     String? cameraMatrixJson,
     void Function(double progress)? onProgress,
   }) async {
@@ -55,6 +58,7 @@ class ApiService {
       MapEntry('lng', lng.toString()),
       MapEntry('user_id', userId),
       MapEntry('firestore_doc_id', firestoreDocId),
+      if (locations != null) MapEntry('locations', jsonEncode(locations)),
       if (cameraMatrixJson != null) MapEntry('camera_matrix', cameraMatrixJson),
     ]);
 

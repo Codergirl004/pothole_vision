@@ -120,7 +120,9 @@ class ReportsScreen extends StatelessWidget {
                 depthCm: (data['depthCm'] as num?)?.toDouble(),
                 areaCm2: (data['areaCm2'] as num?)?.toDouble(),
                 volumeCm3: (data['volumeCm3'] as num?)?.toDouble(),
-                estimatedCost: (data['estimatedCost'] as num?)?.toDouble(),
+                estimatedCost: (data['totalBatchCost'] as num? ??
+                        data['estimatedCost'] as num?)
+                    ?.toDouble(),
                 pdfUrl: data['pdfUrl'] as String?,
                 analysisStatus:
                     data['analysisStatus'] as String? ?? 'uploading',

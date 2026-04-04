@@ -124,7 +124,18 @@ class _UploadScreenState extends State<UploadScreen> {
     final lat = _currentPosition?.latitude ?? 0.0;
     final lng = _currentPosition?.longitude ?? 0.0;
 
-    // Compress images before upload
+    // 1. EXTRACT GPS FROM EXIF (for gallery uploads)
+    List<Map<String, double>> locations = [];
+    for (var image in _selectedImages) {
+      final exifLoc = await ImageUtils.extractLocation(image);
+      // Use EXIF location if available, otherwise fallback to current position
+      locations.add({
+        'lat': exifLoc?['lat'] ?? lat,
+        'lng': exifLoc?['lng'] ?? lng,
+      });
+    }
+
+    // 2. Compress images before upload
     final compressed = await ImageUtils.compressImages(_selectedImages);
 
     final success = await potholeProvider.uploadImages(
@@ -134,6 +145,7 @@ class _UploadScreenState extends State<UploadScreen> {
       address: _currentAddress,
       userId: auth.userModel?.uid ?? '',
       cameraMatrixJson: calibrationProvider.cameraMatrixJson,
+      locations: locations,
     );
 
     if (success && mounted) {

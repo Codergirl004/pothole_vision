@@ -58,6 +58,7 @@ class PotholeProvider extends ChangeNotifier {
     required String userId,
     String? address,
     String? cameraMatrixJson,
+    List<Map<String, double>>? locations,
   }) async {
     try {
       _uploadStatus = UploadStatus.uploading;
@@ -99,6 +100,7 @@ class PotholeProvider extends ChangeNotifier {
         lng: lng,
         userId: userId,
         firestoreDocId: docId,
+        locations: locations,
         cameraMatrixJson: cameraMatrixJson,
         onProgress: (progress) {
           _uploadProgress = progress;

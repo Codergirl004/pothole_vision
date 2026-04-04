@@ -1,20 +1,17 @@
 import math
 
 class PotholePrioritizer:
-    def get_priority_score(self, depth_cm, area_cm2):
-        # 1. Normalize Physical Data (0-10 scale)
-        # 15cm depth is 'Critical', 5000cm2 area is 'Large'
-        depth_score = min((depth_cm / 15.0) * 10, 10)
-        area_score = min((area_cm2 / 5000.0) * 10, 10)
-        
-        # 2. Weighted Total
-        # Only Depth (70%) and Area (30%)
-        final_score = (depth_score * 0.70) + (area_score * 0.30)
+    def get_priority_score(self, depth_cm, area_cm2=None):
+        # 1. Direct Depth-based Score (0-10 scale)
+        # Depth is the 100% driver of priority
+        # Let 20cm be the maximum score (10.0)
+        final_score = min((depth_cm / 20.0) * 10, 10)
         
         return round(float(final_score), 2)
 
     def get_label(self, score):
-        if score >= 8.5: return "CRITICAL"
-        if score >= 6.5: return "HIGH"
-        if score >= 4.0: return "MEDIUM"
+        # Labels based on the 20cm scale (Score = Depth/2)
+        if score >= 9.0: return "CRITICAL"    # >18cm
+        if score >= 5.0: return "HIGH"        # >10cm
+        if score >= 2.0: return "MEDIUM"      # >4cm
         return "LOW"

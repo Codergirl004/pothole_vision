@@ -11,3 +11,7 @@ openpyxl
 timm
 lapx
 scikit-learn
+pdfplumber
+fpdf
+imagehash
+Pillow

@@ -2,7 +2,7 @@ class AppConstants {
   // ── API ──────────────────────────────────────────────
   // Change this to your Flask backend URL.
   // For Android emulator use 10.0.2.2, for physical device use your PC's LAN IP.
-  static const String apiBaseUrl = 'http://192.168.1.2:5000/api/';
+  static const String apiBaseUrl = 'http://192.168.1.7:5000/api/';
 
   // ── Firestore Collections ───────────────────────────
   static const String usersCollection = 'users';

@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 import os
 from sklearn.linear_model import RANSACRegressor
+import imagehash
+from PIL import Image
 
 class PotholeAnalyzer:
     def __init__(self, camera_height_cm=150, focal_length=1200):
@@ -21,6 +23,132 @@ class PotholeAnalyzer:
         
         if not os.path.exists("debug_heatmaps"):
             os.makedirs("debug_heatmaps")
+            
+        # Initialize ORB for similarity matching
+        self.orb = cv2.ORB_create(nfeatures=500)
+        self.bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+    def compute_quality_score(self, img, bbox, detection_confidence):
+        """
+        Computes a quality score based on brightness, contrast, sharpness, and confidence.
+        """
+        x1, y1, x2, y2 = map(int, bbox)
+        crop = img[y1:y2, x1:x2]
+        if crop.size == 0:
+            return 0.0
+            
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        
+        # 1. Brightness (0-255, ideal around 127)
+        brightness = np.mean(gray)
+        brightness_score = 1.0 - abs(brightness - 127.5) / 127.5
+        
+        # 2. Contrast (std dev)
+        contrast = np.std(gray)
+        contrast_score = min(contrast / 50.0, 1.0) # Assume 50 is "good enough" contrast
+        
+        # 3. Sharpness (Laplacian variance)
+        sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
+        sharpness_score = min(sharpness / 500.0, 1.0) # Assume 500 is "sharp"
+        
+        # Weighted average
+        total_score = (brightness_score * 0.2) + (contrast_score * 0.2) + (sharpness_score * 0.3) + (detection_confidence * 0.3)
+        return round(float(total_score), 4)
+
+    def get_image_hash(self, img, bbox):
+        """
+        Computes the perceptual hash of the pothole crop.
+        """
+        x1, y1, x2, y2 = map(int, bbox)
+        crop = img[max(0, y1):max(0, y2), max(0, x1):max(0, x2)]
+        if crop.size == 0:
+            return None
+        
+        img_pil = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+        return str(imagehash.phash(img_pil))
+
+    def get_orb_features(self, img, bbox):
+        """
+        Extracts ORB descriptors and keypoint coordinates for the pothole crop.
+        Returns a hex string of the descriptors and keypoints for storage.
+        """
+        x1, y1, x2, y2 = map(int, bbox)
+        crop = img[max(0, y1):max(0, y2), max(0, x1):max(0, x2)]
+        if crop.size == 0:
+            return None
+        
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        kp, des = self.orb.detectAndCompute(gray, None)
+        
+        if des is None or len(kp) == 0:
+            return None
+            
+        # Extract (x, y) coordinates from keypoints
+        kp_coords = np.array([p.pt for p in kp], dtype=np.float32)
+        
+        # Pack into hex string: [4 bytes count][descriptors][kp_coords]
+        count = np.array([len(kp)], dtype=np.int32)
+        packed = count.tobytes() + des.tobytes() + kp_coords.tobytes()
+        return packed.hex()
+
+    def compare_similarity(self, hash1, hash2):
+        """
+        Compares two perceptual hashes. 
+        Returns a similarity score (1.0 - normalized distance).
+        """
+        if not hash1 or not hash2:
+            return 0.0
+        
+        h1 = imagehash.hex_to_hash(hash1)
+        h2 = imagehash.hex_to_hash(hash2)
+        
+        # Distance = number of bits that are different (out of 64)
+        distance = h1 - h2
+        similarity = 1.0 - (distance / 64.0)
+        return similarity
+
+    def compare_orb(self, hex_data1, hex_data2):
+        """
+        Compares two ORB sets using RANSAC Geometric Verification.
+        Returns the number of inlier matches.
+        """
+        if not hex_data1 or not hex_data2:
+            return 0
+            
+        try:
+            # Unpack hex data
+            raw1 = bytes.fromhex(hex_data1)
+            raw2 = bytes.fromhex(hex_data2)
+            
+            count1 = np.frombuffer(raw1[:4], dtype=np.int32)[0]
+            des1 = np.frombuffer(raw1[4:4 + count1*32], dtype=np.uint8).reshape(count1, 32)
+            kp1 = np.frombuffer(raw1[4 + count1*32:], dtype=np.float32).reshape(count1, 2)
+            
+            count2 = np.frombuffer(raw2[:4], dtype=np.int32)[0]
+            des2 = np.frombuffer(raw2[4:4 + count2*32], dtype=np.uint8).reshape(count2, 32)
+            kp2 = np.frombuffer(raw2[4 + count2*32:], dtype=np.float32).reshape(count2, 2)
+            
+            # 1. Match Descriptors
+            matches = self.bf.match(des1, des2)
+            if len(matches) < 8: # Minimum needed for homography + significance
+                return 0
+                
+            # 2. Geometric Verification (RANSAC)
+            src_pts = np.float32([kp1[m.queryIdx] for m in matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32([kp2[m.trainIdx] for m in matches]).reshape(-1, 1, 2)
+            
+            # Find homography matrix
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+            
+            if mask is None:
+                return 0
+                
+            inliers = int(np.sum(mask))
+            return inliers
+            
+        except Exception as e:
+            print(f"ORB RANSAC Match Error: {e}")
+            return 0
 
     def get_depth_map(self, img):
         """Generates raw disparity map."""
@@ -133,9 +261,16 @@ class PotholeAnalyzer:
             
             self.save_debug_heatmap(diff)
 
-            # --- IMPROVEMENT: USE 95th PERCENTILE ---
-            # 85th was an improvement, but 95th is more robust for small deep pits
-            disparity_diff = np.percentile(diff, 95) 
+            # --- IMPROVEMENT: USE AVERAGE OF DEEPEST 10% ---
+            # Instead of a single 95th percentile point, which can be noisy, 
+            # use the average of the top 10% deepest pixels.
+            diff_flat = diff.ravel()
+            deepest_indices = np.argsort(diff_flat)[-int(len(diff_flat)*0.1):]
+            if len(deepest_indices) > 0:
+                disparity_diff = np.mean(diff_flat[deepest_indices])
+            else:
+                disparity_diff = np.percentile(diff_flat, 95)
+            
             disparity_diff = max(0.1, disparity_diff)
 
             # 4. SCALE TO CENTIMETERS
@@ -156,7 +291,7 @@ class PotholeAnalyzer:
             real_depth = 5.0 
 
         # 3. VOLUME CALCULATION
-        real_volume = real_area * real_depth * 0.6
+        real_volume = real_area * real_depth * 0.8
 
         return {
             "area": round(float(real_area), 2),
