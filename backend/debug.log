@@ -1,26 +1,19 @@
---- LOG RESTARTED AT 2026-04-04 10:54:34.655583 ---
-DEBUG: Loaded 16 potholes for global image-matching.
-DEBUG: Comparing with 0.0_0.0. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_21c119c1a57a47c194d6a387cfa1b5c8. PHash: 0.6250, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_80d758614a87442fb2810e989cca5275. PHash: 0.4688, RANSAC Inliers: 9
-DEBUG: Comparing with pothole_9275cc984de04931a44fd6525a58995d. PHash: 0.5000, RANSAC Inliers: 9
-DEBUG: Comparing with pothole_97a34a1098f34d91a7b6bded03c0cfb7. PHash: 0.6562, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_aa2f4d020edc48db90b22f34eaf96b60. PHash: 0.6562, RANSAC Inliers: 11
-DEBUG: Comparing with pothole_ad8036d536954de397fe3dc1f4d03efd. PHash: 0.7188, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_c763326f709e4a5b8b0cf8a7d3d0c8b0. PHash: 0.8438, RANSAC Inliers: 189
-DEBUG: MATCH FOUND with pothole_c763326f709e4a5b8b0cf8a7d3d0c8b0 (RANSAC:189, PHash:0.8438, SameLoc:False)
-DEBUG: Comparing with 0.0_0.0. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_21c119c1a57a47c194d6a387cfa1b5c8. PHash: 0.5000, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_80d758614a87442fb2810e989cca5275. PHash: 0.6562, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_9275cc984de04931a44fd6525a58995d. PHash: 0.5000, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_97a34a1098f34d91a7b6bded03c0cfb7. PHash: 0.6562, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_aa2f4d020edc48db90b22f34eaf96b60. PHash: 0.4062, RANSAC Inliers: 9
-DEBUG: Comparing with pothole_ad8036d536954de397fe3dc1f4d03efd. PHash: 0.5000, RANSAC Inliers: 10
-DEBUG: Comparing with pothole_c763326f709e4a5b8b0cf8a7d3d0c8b0. PHash: 0.5312, RANSAC Inliers: 9
-DEBUG: Comparing with pothole_c8d3949f97cf459b8556028bafcd67b7. PHash: 0.6250, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_cb38a4c44e3245bfb4b3e7f1df1e0a97. PHash: 0.7188, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_cf782e554c584723950401fdff5ddefc. PHash: 0.4375, RANSAC Inliers: 9
-DEBUG: Comparing with pothole_d91d0a282bed4f75bd73db96f3201f8d. PHash: 0.5938, RANSAC Inliers: 10
-DEBUG: Comparing with pothole_d99849aeff384861b72c07dfb1d52ebe. PHash: 0.4688, RANSAC Inliers: 6
-DEBUG: Comparing with pothole_eb53769c06ae4f94975ab1b567683a8a. PHash: 0.7500, RANSAC Inliers: 97
-DEBUG: MATCH FOUND with pothole_eb53769c06ae4f94975ab1b567683a8a (RANSAC:97, PHash:0.7500, SameLoc:False)
+--- LOG RESTARTED AT 2026-04-05 21:18:36.048962 ---
+DEBUG: Loaded 1 potholes for global image-matching.
+DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
+DEBUG: Loaded 2 potholes for global image-matching.
+DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.4062, RANSAC Inliers: 10
+DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
+DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.6562, RANSAC Inliers: 9
+DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
+DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.5312, RANSAC Inliers: 8
+DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.5938, RANSAC Inliers: 9
+DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
+DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.5000, RANSAC Inliers: 7
+DEBUG: Comparing with pothole_5c24b63c71bb49048cbda3cd492596e5. PHash: 0.6562, RANSAC Inliers: 8
+DEBUG: Loaded 5 potholes for global image-matching.
+DEBUG: Comparing with pothole_53dbed200c2c48b8910d4a6a8eb53032. PHash: 0.5312, RANSAC Inliers: 8
+DEBUG: Comparing with pothole_5c24b63c71bb49048cbda3cd492596e5. PHash: 0.5312, RANSAC Inliers: 7
+DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.8125, RANSAC Inliers: 44
+DEBUG: MATCH FOUND with pothole_e1231b50f38847ab8e227a7f8d5ce2d6 (RANSAC:44, PHash:0.8125, SameLoc:True)
+DEBUG: Loaded 5 potholes for global image-matching.
