@@ -1,19 +1,13 @@
---- LOG RESTARTED AT 2026-04-05 21:18:36.048962 ---
-DEBUG: Loaded 1 potholes for global image-matching.
-DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Loaded 2 potholes for global image-matching.
-DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.4062, RANSAC Inliers: 10
-DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.6562, RANSAC Inliers: 9
-DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.5312, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_e5dc86acb8ed4ae8ab4066b52307de89. PHash: 0.5938, RANSAC Inliers: 9
-DEBUG: Comparing with test_loc. PHash: 0.0000, RANSAC Inliers: 0
-DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.5000, RANSAC Inliers: 7
-DEBUG: Comparing with pothole_5c24b63c71bb49048cbda3cd492596e5. PHash: 0.6562, RANSAC Inliers: 8
-DEBUG: Loaded 5 potholes for global image-matching.
-DEBUG: Comparing with pothole_53dbed200c2c48b8910d4a6a8eb53032. PHash: 0.5312, RANSAC Inliers: 8
-DEBUG: Comparing with pothole_5c24b63c71bb49048cbda3cd492596e5. PHash: 0.5312, RANSAC Inliers: 7
-DEBUG: Comparing with pothole_e1231b50f38847ab8e227a7f8d5ce2d6. PHash: 0.8125, RANSAC Inliers: 44
-DEBUG: MATCH FOUND with pothole_e1231b50f38847ab8e227a7f8d5ce2d6 (RANSAC:44, PHash:0.8125, SameLoc:True)
-DEBUG: Loaded 5 potholes for global image-matching.
+--- LOG RESTARTED AT 2026-05-04 11:46:10.680179 ---
+DEBUG: Loaded 6 potholes for global image-matching.
+DEBUG: Bounding Box Coordinates: [     38.916      58.248      226.14      154.04]
+DEBUG: Comparing with pothole_17cb149af23040269c6f85bd08aeef73. PHash: 0.4062, RANSAC Inliers: 4
+DEBUG: Comparing with pothole_6cd39bdef2fb4829a83e079964b18252. PHash: 0.5938, RANSAC Inliers: 5
+DEBUG: Comparing with pothole_852a6bbb61514e8b8af475094678ae55. PHash: 0.9688, RANSAC Inliers: 32
+DEBUG: MATCH FOUND with pothole_852a6bbb61514e8b8af475094678ae55 (RANSAC:32, PHash:0.9688, SameLoc:False)
+DEBUG: Bounding Box Coordinates: [     146.25      71.371      452.86      338.76]
+DEBUG: Comparing with pothole_17cb149af23040269c6f85bd08aeef73. PHash: 0.6875, RANSAC Inliers: 7
+DEBUG: Comparing with pothole_6cd39bdef2fb4829a83e079964b18252. PHash: 0.4062, RANSAC Inliers: 10
+DEBUG: Comparing with pothole_852a6bbb61514e8b8af475094678ae55. PHash: 0.4688, RANSAC Inliers: 8
+DEBUG: Comparing with pothole_afe23b6133254f77b6441603ebcea881. PHash: 1.0000, RANSAC Inliers: 453
+DEBUG: MATCH FOUND with pothole_afe23b6133254f77b6441603ebcea881 (RANSAC:453, PHash:1.0000, SameLoc:True)

@@ -282,6 +282,7 @@ class PotholeAnalyzer:
             real_depth = disparity_diff * depth_scale
             
             print(f"Debug Depth -> Diff: {disparity_diff:.2f}, Scale: {depth_scale:.4f}, Depth: {real_depth:.2f}cm")
+            print(f"Bounding Box Coordinates: [{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]")
 
             # Constraints
             real_depth = max(1.5, min(real_depth, 28.0))

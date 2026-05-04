@@ -333,6 +333,9 @@ def detect_batch_api():
                     for box in res.boxes:
                         # Metrics and Cost Calculation
                         coords = box.xyxy[0].cpu().numpy()
+                        print(f"Box Coordinates: {coords}")
+                        with open("debug.log", "a") as f:
+                            f.write(f"DEBUG: Bounding Box Coordinates: {coords}\n")
                         metrics = analyzer.calculate_metrics(depth_map, coords, *res.orig_img.shape[:2], camera_matrix=camera_matrix)
                         area, depth, volume = metrics["area"], metrics["depth"], metrics["volume"]
                         

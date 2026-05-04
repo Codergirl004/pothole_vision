@@ -11,7 +11,7 @@ class CostEstimator:
         # Structure: { pdf_path: [ {code: str, qty: float, rate: float}, ... ] }
         self._cache = {}
         # New minimum charge for realistic reporting
-        self.min_repair_cost = 200.0 
+        self.min_repair_cost = 500.0 
 
     def load_rates(self):
         if os.path.exists(self.lmr_path):
